@@ -79,3 +79,5 @@ How it works:
 "Noisy or unclear audio" turns on the browser noise filter and the cleanup step for that recording, and pads the pause splitting.
 
 Model ids are constants at the top of `engine.js` (`WHISPER`, `LLMS`) if you want to try others. Settings are saved on the device.
+
+Note: `index.html` is now the dictation page (it loads `dictate.js`). The original Whistle-only page is `whistle.html`.

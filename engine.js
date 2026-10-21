@@ -1,7 +1,17 @@
 // Model loading and inference for dictate.html. Everything runs in the browser.
-import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.1";
-
-env.allowLocalModels = false;
+// Transformers.js is imported lazily, so if its CDN is blocked the rest of the page (and Whistle) still works.
+let tf = null;
+async function getTF() {
+  if (!tf) {
+    try {
+      tf = await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.1");
+    } catch (err) {
+      throw new Error("Could not load the Transformers.js library (cdn.jsdelivr.net may be blocked). Try Whistle in Settings.");
+    }
+    tf.env.allowLocalModels = false;
+  }
+  return tf;
+}
 
 export const CFG = {
   // Whistle: engine pinned to a commit so the glue code and binary match.
@@ -131,6 +141,7 @@ export function whistleRun(pcm, language, keywords) {
 export async function loadWhisper(key, deviceChoice, onStatus) {
   const repo = WHISPER[key];
   const progress_callback = progressFor(`Whisper ${key}`, onStatus);
+  const { pipeline } = await getTF();
   const make = (device) =>
     pipeline("automatic-speech-recognition", repo, {
       device,
@@ -161,6 +172,7 @@ export async function loadLLM(key, deviceChoice, onStatus) {
   const progress_callback = progressFor(`cleanup model (${key})`, onStatus);
   const gpu = deviceChoice === "wasm" ? false : deviceChoice === "webgpu" || !!navigator.gpu;
   const attempts = gpu ? [["webgpu", "q4f16"], ["webgpu", "q4"], ["wasm", "q4"]] : [["wasm", "q4"]];
+  const { pipeline } = await getTF();
   let last;
   for (const [device, dtype] of attempts) {
     try {

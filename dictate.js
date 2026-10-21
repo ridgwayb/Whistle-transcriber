@@ -389,6 +389,8 @@ $("freeBtn").addEventListener("click", async () => {
 });
 
 // ---------- go ----------
+window.addEventListener("error", (e) => setStatus(`Error: ${e.message}`, "error"));
+window.addEventListener("unhandledrejection", (e) => setStatus(`Error: ${e.reason?.message || e.reason}`, "error"));
 showDevices();
 show();
 $("recBtn").disabled = false;
