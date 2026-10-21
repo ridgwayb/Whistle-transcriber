@@ -181,7 +181,7 @@ function streamStop() {
 async function loadEngine() {
   setReady(false);
   try {
-    setStatus("Downloading engine…");
+    setStatus(t("dlEngine"));
     const [jsBuf, wasm] = await Promise.all([
       fetchBuffer(CFG.engineBase + "needle.js", "needle.js"),
       fetchBuffer(CFG.engineBase + "needle.wasm", "needle.wasm"),
@@ -198,14 +198,14 @@ async function loadEngine() {
     });
     if (typeof createNeedle !== "function") throw new Error("needle.js did not define createNeedle");
 
-    setStatus("Downloading Whistle model (16.9 MB, cached after the first visit)…");
+    setStatus(t("dlModel"));
     const cact = await fetchBuffer(CFG.modelUrl, "whistle.cact", (f, bytes) => {
       setProgress(f);
-      if (f == null) setStatus(`Downloading Whistle model… ${(bytes / 1e6).toFixed(1)} MB`);
+      if (f == null) setStatus(t("dlModelMb", { mb: (bytes / 1e6).toFixed(1) }));
     });
     setProgress(null);
 
-    setStatus("Starting engine…");
+    setStatus(t("startEngine"));
     mod = await createNeedle({ wasmBinary: wasm });
 
     const p = mod._malloc(cact.byteLength);
@@ -216,15 +216,15 @@ async function loadEngine() {
     if (rc < 0) throw new Error(lastError() || "needle_load failed");
     if (mod._needle_models) {
       const kinds = mod._needle_models();
-      if (!(kinds & 2)) throw new Error("Engine loaded, but the speech model is missing.");
+      if (!(kinds & 2)) throw new Error(t("speechMissing"));
     }
 
-    setStatus("Ready. Everything runs on this device.", "ok");
+    setStatus(t("ready"), "ok");
     setReady(true);
   } catch (err) {
     console.error(err);
     setProgress(null);
-    setStatus(`Could not start: ${err.message}. Check your connection and reload.`, "error");
+    setStatus(t("startFail", { msg: err.message }), "error");
   }
 }
 
@@ -362,8 +362,6 @@ function addText(t) {
 function showStats(parts) {
   ui.stats.textContent = parts.filter(Boolean).join("  ·  ");
 }
-const LANGS = { en: "English", de: "German", fr: "French", es: "Spanish", it: "Italian", nl: "Dutch", pl: "Polish" };
-const langName = (c) => LANGS[c] || c;
 
 // ---------- modes ----------
 let mode = "live";
@@ -385,7 +383,7 @@ ui.micBtn.addEventListener("click", async () => {
     rec = null;
     mic.stop();
     ui.micBtn.dataset.on = "false";
-    ui.micLabel.textContent = "Record";
+    ui.micLabel.textContent = t("recStart");
     const pcm = concat(chunks);
     await runWhole(pcm);
     busy = false;
@@ -398,8 +396,8 @@ ui.micBtn.addEventListener("click", async () => {
     const mic = await openMic((c) => chunks.push(c), ui.level);
     rec = { mic, chunks };
     ui.micBtn.dataset.on = "true";
-    ui.micLabel.textContent = "Stop and transcribe";
-    setStatus("Recording…");
+    ui.micLabel.textContent = t("recStop");
+    setStatus(t("recording"));
   } catch (err) {
     busy = false;
     setStatus(micError(err), "error");
@@ -408,10 +406,10 @@ ui.micBtn.addEventListener("click", async () => {
 
 async function runWhole(pcm) {
   if (pcm.length < CFG.sampleRate * 0.3) {
-    setStatus("That clip was too short. Try again.", "error");
+    setStatus(t("tooShort"), "error");
     return;
   }
-  setStatus("Transcribing…");
+  setStatus(t("transcribing"));
   await new Promise((r) => setTimeout(r, 30)); // let the UI paint
   try {
     const t0 = performance.now();
@@ -422,7 +420,7 @@ async function runWhole(pcm) {
     });
     const ms = performance.now() - t0;
     if (!res.text) {
-      setStatus("No speech detected. Silence and steady noise return nothing.", "error");
+      setStatus(t("noSpeech"), "error");
       return;
     }
     addText(res.text);
@@ -430,14 +428,14 @@ async function runWhole(pcm) {
     render();
     showStats([
       res.language && langName(res.language),
-      `${(pcm.length / CFG.sampleRate).toFixed(1)} s of audio in ${(ms / 1000).toFixed(2)} s`,
-      res.ttft_ms != null && `first token ${res.ttft_ms.toFixed(0)} ms`,
-      res.decode_tps != null && `${Math.round(res.decode_tps)} tokens/s`,
+      t("statAudio", { a: (pcm.length / CFG.sampleRate).toFixed(1), b: (ms / 1000).toFixed(2) }),
+      res.ttft_ms != null && t("statFirst", { ms: res.ttft_ms.toFixed(0) }),
+      res.decode_tps != null && t("statTps", { n: Math.round(res.decode_tps) }),
     ]);
-    setStatus("Done.", "ok");
+    setStatus(t("done"), "ok");
   } catch (err) {
     console.error(err);
-    setStatus(`Transcription failed: ${err.message}`, "error");
+    setStatus(t("transcribeFail", { msg: err.message }), "error");
   }
 }
 
@@ -446,12 +444,12 @@ async function handleFile(file) {
   if (!file || busy || !mod) return;
   busy = true;
   try {
-    setStatus(`Decoding ${file.name}…`);
+    setStatus(t("decoding", { name: file.name }));
     const pcm = await decodeFile(file);
     await runWhole(pcm);
   } catch (err) {
     console.error(err);
-    setStatus(`Could not read that file: ${err.message}`, "error");
+    setStatus(t("fileFail", { msg: err.message }), "error");
   } finally {
     busy = false;
     ui.fileInput.value = "";
@@ -490,11 +488,11 @@ ui.liveBtn.addEventListener("click", async () => {
           addText(r.text);
           if (r.words?.length) state.words.push(...r.words);
           ui.pending.textContent = r.pending ? ` ${r.pending}` : "";
-          if (r.language) showStats([langName(r.language), `${r.received?.toFixed(1)} s heard`, `pass ${Math.round(r.pass_ms)} ms`]);
+          if (r.language) showStats([langName(r.language), t("statHeard", { s: r.received?.toFixed(1) }), t("statPass", { ms: Math.round(r.pass_ms) })]);
           render();
         } catch (err) {
           console.error(err);
-          setStatus(`Live transcription failed: ${err.message}`, "error");
+          setStatus(t("liveFail", { msg: err.message }), "error");
           return stopLive();
         }
       }
@@ -508,8 +506,8 @@ ui.liveBtn.addEventListener("click", async () => {
     }, ui.levelLive);
     live = { mic, buf, pump };
     ui.liveBtn.dataset.on = "true";
-    ui.liveLabel.textContent = "Stop";
-    setStatus("Listening. Words appear as they are confirmed.");
+    ui.liveLabel.textContent = t("liveStop");
+    setStatus(t("listening"));
   } catch (err) {
     busy = false;
     setStatus(micError(err), "error");
@@ -531,25 +529,24 @@ function stopLive() {
   }
   ui.pending.textContent = "";
   ui.liveBtn.dataset.on = "false";
-  ui.liveLabel.textContent = "Start listening";
+  ui.liveLabel.textContent = t("liveStart");
   busy = false;
   render();
-  setStatus("Stopped.", "ok");
+  setStatus(t("stopped"), "ok");
 }
 
 function micError(err) {
-  if (err?.name === "NotAllowedError") return "Microphone blocked. Allow access in your browser's site settings.";
-  if (err?.name === "NotFoundError") return "No microphone found.";
-  if (!window.isSecureContext) return "The microphone needs HTTPS (or localhost).";
-  return `Microphone error: ${err?.message || err}`;
+  if (err?.name === "NotAllowedError") return t("micBlocked");
+  if (!window.isSecureContext) return t("micHttps");
+  if (err?.name === "NotFoundError") return t("micNone");
+  return t("micErr", { msg: err?.message || err });
 }
 
 // ---------- output actions ----------
 ui.copy.addEventListener("click", async () => {
   await navigator.clipboard.writeText(state.text);
-  const old = ui.copy.textContent;
-  ui.copy.textContent = "Copied";
-  setTimeout(() => (ui.copy.textContent = old), 1200);
+  ui.copy.textContent = t("copied");
+  setTimeout(() => (ui.copy.textContent = t("copy")), 1200);
 });
 ui.save.addEventListener("click", () => {
   const blob = new Blob([state.text + "\n"], { type: "text/plain" });
@@ -568,6 +565,21 @@ ui.clear.addEventListener("click", () => {
 });
 
 // ---------- go ----------
+function refreshLabels() {
+  ui.micLabel.textContent = rec ? t("recStop") : t("recStart");
+  ui.liveLabel.textContent = live ? t("liveStop") : t("liveStart");
+}
+$("uiLang").addEventListener("change", (e) => {
+  setUiLang(e.target.value);
+  applyI18n();
+  refreshLabels();
+  if (ui.status.dataset.kind === "error" || busy) return; // leave errors and in-progress messages alone
+  if (mod) setStatus(t("ready"), "ok");
+});
+
+applyI18n();
+refreshLabels();
+setStatus(t("starting"));
 setMode("live");
 render();
 loadEngine();
