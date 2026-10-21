@@ -109,7 +109,7 @@
     padding: 18px 18px 14px; display: grid; gap: 12px;
   }
   #transcript { min-height: 9rem; font: 1.3rem/1.65 var(--read); white-space: pre-wrap; overflow-wrap: anywhere; }
-  #transcript.empty::before { content: "Your transcript will appear here."; color: var(--ink-soft); font-style: italic; }
+  #transcript.empty::before { content: attr(data-empty); color: var(--ink-soft); font-style: italic; }
   #pending { color: var(--ink-soft); }
   .foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
   .foot .actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -121,6 +121,9 @@
   #wordList time { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
   #wordList small { color: var(--ink-soft); }
 
+  .hrow { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .ui-lang { width: auto; min-height: 36px; padding: 6px 10px; font-size: .9rem; }
+  .note { margin: 0; font-size: .85rem; color: var(--ink-soft); }
   footer { font-size: .85rem; color: var(--ink-soft); }
   footer a { color: inherit; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -129,8 +132,17 @@
 <body>
 <main>
   <header>
-    <h1>Whistle transcriber</h1>
-    <p>Speech to text that runs entirely in this tab. The 16.9 MB model downloads once, then your audio never leaves your device.</p>
+    <div class="hrow">
+      <h1 data-i18n="title">Whistle transcriber</h1>
+      <select id="uiLang" class="ui-lang" data-i18n-aria="uiLang" aria-label="Interface language">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+        <option value="ca">Català</option>
+        <option value="zh">中文</option>
+      </select>
+    </div>
+    <p data-i18n="subtitle">Speech to text that runs entirely in this tab.</p>
   </header>
 
   <div>
@@ -140,36 +152,36 @@
 
   <section>
     <div class="tabs" role="tablist">
-      <button role="tab" data-mode="live" aria-selected="true">Live</button>
-      <button role="tab" data-mode="record" aria-selected="false">Record a clip</button>
-      <button role="tab" data-mode="file" aria-selected="false">Audio file</button>
+      <button role="tab" data-mode="live" aria-selected="true" data-i18n="tabLive">Live</button>
+      <button role="tab" data-mode="record" aria-selected="false" data-i18n="tabRecord">Record a clip</button>
+      <button role="tab" data-mode="file" aria-selected="false" data-i18n="tabFile">Audio file</button>
     </div>
 
     <div class="panel" data-panel="live" style="margin-top:16px">
-      <p>Words appear a second or two after you say them, once two passes agree. No time limit.</p>
+      <p data-i18n="liveHelp">Words appear a second or two after you say them.</p>
       <button class="btn" id="liveBtn" disabled><span class="dot"></span><span id="liveLabel">Start listening</span></button>
       <div class="meter" id="levelLive" aria-hidden="true"></div>
     </div>
 
     <div class="panel" data-panel="record" style="margin-top:16px" hidden>
-      <p>Record, then transcribe the whole clip in one go. Supports word timestamps.</p>
+      <p data-i18n="recHelp">Record, then transcribe the whole clip.</p>
       <button class="btn" id="micBtn" disabled><span class="dot"></span><span id="micLabel">Record</span></button>
       <div class="meter" id="level" aria-hidden="true"></div>
     </div>
 
     <div class="panel" data-panel="file" style="margin-top:16px" hidden>
       <label class="drop disabled" id="drop">
-        <strong>Choose an audio file</strong>
-        <span>or drop one here (mp3, wav, m4a, ogg, and whatever your browser can decode)</span>
+        <strong data-i18n="fileChoose">Choose an audio file</strong>
+        <span data-i18n="fileDrop">or drop one here</span>
         <input type="file" id="fileInput" accept="audio/*,video/*" disabled>
       </label>
     </div>
   </section>
 
   <section class="settings" aria-label="Settings">
-    <label>Language
+    <label><span data-i18n="language">Language</span>
       <select id="language">
-        <option value="">Detect automatically</option>
+        <option value="" data-i18n="langAuto">Detect automatically</option>
         <option value="en">English</option>
         <option value="de">German</option>
         <option value="fr">French</option>
@@ -179,31 +191,29 @@
         <option value="pl">Polish</option>
       </select>
     </label>
-    <label class="check" id="wordsRow"><input type="checkbox" id="words"> Word timestamps</label>
-    <label class="wide">Names and terms to favour (comma-separated)
+    <label class="check" id="wordsRow"><input type="checkbox" id="words"> <span data-i18n="wordTimes">Word timestamps</span></label>
+    <p class="note wide" id="langNote"></p>
+    <label class="wide"><span data-i18n="keywordsLabel">Names and terms to favour (comma-separated)</span>
       <input type="text" id="keywords" placeholder="Siobhan, Krzysztof, X-ray crystallography" autocomplete="off" spellcheck="false">
     </label>
   </section>
 
   <section class="sheet">
-    <div id="transcript" class="empty"><span id="committed"></span><span id="pending"></span></div>
+    <div id="transcript" class="empty" data-i18n-empty="empty"><span id="committed"></span><span id="pending"></span></div>
     <ol id="wordList" hidden></ol>
     <div class="foot">
       <span id="stats"></span>
       <span class="actions">
-        <button class="btn quiet" id="copy" disabled>Copy</button>
-        <button class="btn quiet" id="save" disabled>Save .txt</button>
-        <button class="btn quiet" id="clear" disabled>Clear</button>
+        <button class="btn quiet" id="copy" disabled data-i18n="copy">Copy</button>
+        <button class="btn quiet" id="save" disabled data-i18n="save">Save .txt</button>
+        <button class="btn quiet" id="clear" disabled data-i18n="clear">Clear</button>
       </span>
     </div>
   </section>
 
-  <footer>
-    Model: <a href="https://cactuscompute.com/blog/whistle">Whistle</a> by Cactus Compute (Apache-2.0), run through the
-    <a href="https://github.com/cactus-compute/needle">Needle</a> WebAssembly engine. Music and background sounds can
-    still come out as text, so use it for speech.
-  </footer>
+  <footer data-i18n-html="footer"></footer>
 </main>
+<script src="i18n.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
