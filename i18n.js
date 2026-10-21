@@ -1,0 +1,355 @@
+// UI translations. The interface language follows the browser/OS language list
+// (navigator.languages), falls back to English, and can be overridden with the
+// selector in the header (remembered in localStorage).
+
+const I18N = {
+  en: {
+    title: "Whistle transcriber",
+    subtitle: "Speech-to-text transcription that runs entirely in your browser tab. The 16.9 MB model downloads once, then your audio never leaves your device.",
+    uiLang: "Interface language",
+    tabLive: "Live",
+    tabRecord: "Record a clip",
+    tabFile: "Audio file",
+    liveHelp: "Words appear a second or two after you say them, once two passes agree. No time limit.",
+    liveStart: "Start listening",
+    liveStop: "Stop",
+    recHelp: "Record, then transcribe the whole clip in one go. Supports word timestamps.",
+    recStart: "Record",
+    recStop: "Stop and transcribe",
+    fileChoose: "Choose an audio file",
+    fileDrop: "or drop one here (mp3, wav, m4a, ogg, and whatever your browser can decode)",
+    language: "Language",
+    langAuto: "Detect automatically",
+    langNote: "Whistle can transcribe audio in {list}.",
+    wordTimes: "Word timestamps",
+    keywordsLabel: "Names and terms to favour (comma-separated)",
+    empty: "Your transcript will appear here.",
+    copy: "Copy",
+    copied: "Copied",
+    save: "Save .txt",
+    clear: "Clear",
+    footer: 'Model: <a href="https://cactuscompute.com/blog/whistle">Whistle</a> by Cactus Compute (Apache-2.0), run through the <a href="https://github.com/cactus-compute/needle">Needle</a> WebAssembly engine. Music and background noise may be mistakenly transcribed as speech. This tool is intended for spoken audio.',
+    starting: "Starting…",
+    dlEngine: "Downloading engine…",
+    dlModel: "Downloading Whistle model (16.9 MB, cached after the first visit)…",
+    dlModelMb: "Downloading Whistle model… {mb} MB",
+    startEngine: "Starting engine…",
+    speechMissing: "Engine loaded, but the speech model is missing.",
+    ready: "Ready. Everything runs on this device.",
+    startFail: "Could not start: {msg}. Check your connection and reload.",
+    recording: "Recording…",
+    tooShort: "That clip was too short. Try again.",
+    transcribing: "Transcribing…",
+    noSpeech: "No speech detected. Silence and steady noise return nothing.",
+    done: "Done.",
+    transcribeFail: "Transcription failed: {msg}",
+    decoding: "Decoding {name}…",
+    fileFail: "Could not read that file: {msg}",
+    listening: "Listening. Words appear as they are confirmed.",
+    stopped: "Stopped.",
+    liveFail: "Live transcription failed: {msg}",
+    micBlocked: "Microphone blocked. Allow access in your browser's site settings.",
+    micNone: "No microphone found.",
+    micHttps: "The microphone needs HTTPS (or localhost).",
+    micErr: "Microphone error: {msg}",
+    statAudio: "{a} s of audio in {b} s",
+    statFirst: "first token {ms} ms",
+    statTps: "{n} tokens/s",
+    statHeard: "{s} s heard",
+    statPass: "pass {ms} ms",
+  },
+
+  es: {
+    title: "Transcriptor Whistle",
+    subtitle: "Transcripción de voz a texto que funciona íntegramente en esta pestaña. El modelo de 16,9 MB se descarga una sola vez y tu audio nunca sale de tu dispositivo.",
+    uiLang: "Idioma de la interfaz",
+    tabLive: "En directo",
+    tabRecord: "Grabar un clip",
+    tabFile: "Archivo de audio",
+    liveHelp: "Las palabras aparecen uno o dos segundos después de decirlas, cuando coinciden los resultados de dos análisis. Sin límite de tiempo.",
+    liveStart: "Empezar a escuchar",
+    liveStop: "Detener",
+    recHelp: "Graba y transcribe el clip completo de una vez. Admite marcas de tiempo por palabra.",
+    recStart: "Grabar",
+    recStop: "Detener y transcribir",
+    fileChoose: "Elige un archivo de audio",
+    fileDrop: "o suéltalo aquí (mp3, wav, m4a, ogg y cualquier otro formato que tu navegador pueda decodificar)",
+    language: "Idioma",
+    langAuto: "Detectar automáticamente",
+    langNote: "Whistle puede transcribir audio en los siguientes idiomas: {list}.",
+    wordTimes: "Marcas de tiempo por palabra",
+    keywordsLabel: "Nombres propios y términos que deben tener prioridad en el reconocimiento (separados por comas)",
+    empty: "Tu transcripción aparecerá aquí.",
+    copy: "Copiar",
+    copied: "Copiado",
+    save: "Guardar .txt",
+    clear: "Borrar",
+    footer: 'Modelo: <a href="https://cactuscompute.com/blog/whistle">Whistle</a> de Cactus Compute (Apache-2.0), ejecutado con el motor WebAssembly <a href="https://github.com/cactus-compute/needle">Needle</a>. La música y los sonidos de fondo también pueden interpretarse erróneamente como palabras. Utiliza esta herramienta para transcribir voz.',
+    starting: "Iniciando…",
+    dlEngine: "Descargando el motor…",
+    dlModel: "Descargando el modelo Whistle (16,9 MB, en caché tras la primera visita)…",
+    dlModelMb: "Descargando el modelo Whistle… {mb} MB",
+    startEngine: "Iniciando el motor…",
+    speechMissing: "El motor se cargó, pero falta el modelo de reconocimiento de voz.",
+    ready: "Listo. Todo se ejecuta en este dispositivo.",
+    startFail: "No se pudo iniciar: {msg}. Revisa tu conexión y recarga la página.",
+    recording: "Grabando…",
+    tooShort: "El clip era demasiado corto. Inténtalo de nuevo.",
+    transcribing: "Transcribiendo…",
+    noSpeech: "No se detectó voz. El silencio y los ruidos constantes no generan ninguna transcripción.",
+    done: "Completado.",
+    transcribeFail: "Falló la transcripción: {msg}",
+    decoding: "Decodificando {name}…",
+    fileFail: "No se pudo leer ese archivo: {msg}",
+    listening: "Escuchando. Las palabras aparecen cuando se confirman.",
+    stopped: "Detenido.",
+    liveFail: "Falló la transcripción en directo: {msg}",
+    micBlocked: "Micrófono bloqueado. Permite el acceso en los ajustes del sitio de tu navegador.",
+    micNone: "No se encontró ningún micrófono.",
+    micHttps: "El micrófono requiere HTTPS (o localhost).",
+    micErr: "Error del micrófono: {msg}",
+    statAudio: "{a} s de audio en {b} s",
+    statFirst: "primer token {ms} ms",
+    statTps: "{n} tokens/s",
+    statHeard: "{s} s escuchados",
+    statPass: "pasada {ms} ms",
+  },
+
+  fr: {
+    title: "Whistle – transcription vocale",
+    subtitle: "Reconnaissance vocale qui s’exécute entièrement dans cet onglet. Le modèle de 16,9 Mo se télécharge une seule fois, puis votre audio ne quitte jamais votre appareil.",
+    uiLang: "Langue de l’interface",
+    tabLive: "En direct",
+    tabRecord: "Enregistrer un extrait",
+    tabFile: "Fichier audio",
+    liveHelp: "Les mots apparaissent une à deux secondes après que vous les avez prononcés, lorsque deux analyses successives donnent le même résultat. Sans limite de durée.",
+    liveStart: "Démarrer l’écoute",
+    liveStop: "Arrêter",
+    recHelp: "Enregistrez, puis transcrivez tout l’extrait d’un coup. Vous pouvez également afficher l’horodatage de chaque mot.",
+    recStart: "Enregistrer",
+    recStop: "Arrêter et transcrire",
+    fileChoose: "Choisir un fichier audio",
+    fileDrop: "ou déposez-le ici (mp3, wav, m4a, ogg et tout autre format pris en charge par votre navigateur)",
+    language: "Langue",
+    langAuto: "Détecter automatiquement",
+    langNote: "Whistle peut transcrire les langues suivantes : {list}.",
+    wordTimes: "Horodatage des mots",
+    keywordsLabel: "Noms et termes à privilégier (séparés par des virgules)",
+    empty: "Votre transcription apparaîtra ici.",
+    copy: "Copier",
+    copied: "Copié",
+    save: "Enregistrer en .txt",
+    clear: "Effacer",
+    footer: 'Modèle : <a href="https://cactuscompute.com/blog/whistle">Whistle</a> de Cactus Compute (Apache-2.0), exécuté via le moteur WebAssembly <a href="https://github.com/cactus-compute/needle">Needle</a>. La musique et les bruits de fond peuvent être transcrits à tort comme de la parole. Utilisez donc cet outil uniquement pour transcrire de la parole.',
+    starting: "Démarrage…",
+    dlEngine: "Téléchargement du moteur…",
+    dlModel: "Téléchargement du modèle Whistle (16,9 Mo, mis en cache après la première visite)…",
+    dlModelMb: "Téléchargement du modèle Whistle… {mb} Mo",
+    startEngine: "Démarrage du moteur…",
+    speechMissing: "Le moteur est chargé, mais le modèle de reconnaissance vocale est introuvable.",
+    ready: "Prêt. Tout s’exécute sur cet appareil.",
+    startFail: "Démarrage impossible : {msg}. Vérifiez votre connexion et rechargez la page.",
+    recording: "Enregistrement…",
+    tooShort: "L’extrait était trop court. Réessayez.",
+    transcribing: "Transcription en cours…",
+    noSpeech: "Aucune parole détectée. Le silence et les bruits continus ne génèrent aucune transcription.",
+    done: "Terminé.",
+    transcribeFail: "Échec de la transcription : {msg}",
+    decoding: "Décodage de {name}…",
+    fileFail: "Impossible de lire ce fichier : {msg}",
+    listening: "À l’écoute. Les mots apparaissent à mesure qu’ils sont confirmés.",
+    stopped: "Arrêté.",
+    liveFail: "Échec de la transcription en direct : {msg}",
+    micBlocked: "Microphone bloqué. Autorisez l’accès au microphone dans les paramètres de votre navigateur pour ce site.",
+    micNone: "Aucun microphone trouvé.",
+    micHttps: "Le microphone nécessite HTTPS (ou localhost).",
+    micErr: "Erreur du microphone : {msg}",
+    statAudio: "{a} s d’audio en {b} s",
+    statFirst: "premier jeton {ms} ms",
+    statTps: "{n} jetons/s",
+    statHeard: "{s} s d’écoute",
+    statPass: "passe {ms} ms",
+  },
+
+  ca: {
+    title: "Transcriptor Whistle",
+    subtitle: "Transcripció de veu a text que funciona íntegrament en aquesta pestanya. El model de 16,9 MB es descarrega una sola vegada i el teu àudio no surt mai del dispositiu.",
+    uiLang: "Llengua de la interfície",
+    tabLive: "En directe",
+    tabRecord: "Gravar un fragment",
+    tabFile: "Fitxer d’àudio",
+    liveHelp: "Les paraules apareixen un o dos segons després de dir-les, quan dues passades coincideixen. Sense límit de temps.",
+    liveStart: "Comença a escoltar",
+    liveStop: "Atura",
+    recHelp: "Grava i transcriu el fragment sencer d’un cop. Permet mostrar les marques de temps de cada paraula.",
+    recStart: "Grava",
+    recStop: "Atura i transcriu",
+    fileChoose: "Tria un fitxer d’àudio",
+    fileDrop: "o deixa’l anar aquí (mp3, wav, m4a, ogg i tot allò que el teu navegador pugui descodificar)",
+    language: "Llengua",
+    langAuto: "Detecta automàticament",
+    langNote: "Whistle pot transcriure àudio en les llengües següents: {list}.",
+    wordTimes: "Marques de temps per paraula",
+    keywordsLabel: "Noms propis i termes als quals cal donar prioritat (separats per comes)",
+    empty: "La teva transcripció apareixerà aquí.",
+    copy: "Copia",
+    copied: "Copiat",
+    save: "Desa .txt",
+    clear: "Esborra",
+    footer: 'Model: <a href="https://cactuscompute.com/blog/whistle">Whistle</a> de Cactus Compute (Apache-2.0), executat amb el motor WebAssembly <a href="https://github.com/cactus-compute/needle">Needle</a>. La música i els sorolls de fons també es poden interpretar erròniament com a paraules. Fes servir aquesta eina per transcriure la veu.',
+    starting: "Iniciant…",
+    dlEngine: "Descarregant el motor…",
+    dlModel: "Descarregant el model Whistle (16,9 MB, a la memòria cau després de la primera visita)…",
+    dlModelMb: "Descarregant el model Whistle… {mb} MB",
+    startEngine: "Iniciant el motor…",
+    speechMissing: "El motor s’ha carregat, però falta el model de reconeixement de veu.",
+    ready: "A punt. Tot s’executa en aquest dispositiu.",
+    startFail: "No s’ha pogut iniciar: {msg}. Comprova la connexió i torna a carregar la pàgina.",
+    recording: "Gravant…",
+    tooShort: "El clip era massa curt. Torna-ho a provar.",
+    transcribing: "Transcrivint…",
+    noSpeech: "No s’ha detectat veu. El silenci i els sorolls continus no generen cap transcripció.",
+    done: "Fet.",
+    transcribeFail: "Ha fallat la transcripció: {msg}",
+    decoding: "Descodificant {name}…",
+    fileFail: "No s’ha pogut llegir aquest fitxer: {msg}",
+    listening: "Escoltant. Les paraules apareixen a mesura que es confirmen.",
+    stopped: "Aturat.",
+    liveFail: "Ha fallat la transcripció en directe: {msg}",
+    micBlocked: "Micròfon bloquejat. Permet l’accés a la configuració del lloc del navegador.",
+    micNone: "No s’ha trobat cap micròfon.",
+    micHttps: "El micròfon requereix HTTPS (o localhost).",
+    micErr: "Error del micròfon: {msg}",
+    statAudio: "{a} s d’àudio en {b} s",
+    statFirst: "primer token: {ms} ms",
+    statTps: "{n} tokens/s",
+    statHeard: "{s} s escoltats",
+    statPass: "passada {ms} ms",
+  },
+
+  zh: {
+    title: "Whistle 语音转写",
+    subtitle: "语音转文字功能完全在当前浏览器标签页中运行。16.9 MB 的模型只需下载一次，之后你的音频不会离开设备。",
+    uiLang: "界面语言",
+    tabLive: "实时",
+    tabRecord: "录制片段",
+    tabFile: "音频文件",
+    liveHelp: "说话后约一至两秒，识别结果就会显示出来（两轮识别结果一致时予以确认）。无时间限制。",
+    liveStart: "开始实时转写",
+    liveStop: "停止",
+    recHelp: "录音后一次性转写整段内容，支持为每个词添加时间戳。",
+    recStart: "录制",
+    recStop: "停止并转写",
+    fileChoose: "选择音频文件",
+    fileDrop: "或拖放到此处（mp3、wav、m4a、ogg 以及浏览器能解码的其他格式）",
+    language: "识别语言",
+    langAuto: "自动检测",
+    langNote: "Whistle 支持以下语言的语音转写：{list}。",
+    wordTimes: "逐词时间戳",
+    keywordsLabel: "需要优先识别的名称和专业术语（用逗号分隔）",
+    empty: "转写内容将显示在这里。",
+    copy: "复制",
+    copied: "已复制",
+    save: "保存 .txt",
+    clear: "清除",
+    footer: '模型：Cactus Compute 的 <a href="https://cactuscompute.com/blog/whistle">Whistle</a>（Apache-2.0），通过 <a href="https://github.com/cactus-compute/needle">Needle</a> WebAssembly 引擎运行。音乐和背景噪声也可能被误识别为文字。本工具适用于语音转写。',
+    starting: "正在启动…",
+    dlEngine: "正在下载引擎…",
+    dlModel: "正在下载 Whistle 模型（16.9 MB，首次访问后会缓存）…",
+    dlModelMb: "正在下载 Whistle 模型… {mb} MB",
+    startEngine: "正在启动引擎…",
+    speechMissing: "引擎已加载，但缺少语音模型。",
+    ready: "已就绪。所有处理都在本设备上完成。",
+    startFail: "无法启动：{msg}。请检查网络连接后刷新页面。",
+    recording: "正在录音…",
+    tooShort: "录音太短，请重试。",
+    transcribing: "正在转写…",
+    noSpeech: "未检测到语音。静音和持续噪声不会产生结果。",
+    done: "完成。",
+    transcribeFail: "转写失败：{msg}",
+    decoding: "正在解码 {name}…",
+    fileFail: "无法读取该文件：{msg}",
+    listening: "正在实时识别。识别结果确认后会陆续显示。",
+    stopped: "已停止。",
+    liveFail: "实时转写失败：{msg}",
+    micBlocked: "麦克风已被阻止。请在浏览器的网站设置中允许访问。",
+    micNone: "未找到麦克风。",
+    micHttps: "麦克风需要 HTTPS（或 localhost）。",
+    micErr: "麦克风错误：{msg}",
+    statAudio: "{a} 秒音频，用时 {b} 秒",
+    statFirst: "首个词元 {ms} 毫秒",
+    statTps: "{n} 词元/秒",
+    statHeard: "已处理 {s} 秒音频",
+    statPass: "单轮识别耗时 {ms} 毫秒",
+  },
+};
+
+const LOCALES = { en: "en", es: "es", fr: "fr", ca: "ca", zh: "zh-Hans" };
+const SPEECH_LANGS = ["en", "de", "fr", "es", "it", "nl", "pl"]; // what Whistle can transcribe
+
+function detectLang() {
+  try {
+    const saved = localStorage.getItem("ui-lang");
+    if (saved && I18N[saved]) return saved;
+  } catch {}
+  const prefs = navigator.languages?.length ? navigator.languages : [navigator.language || "en"];
+  for (const p of prefs) {
+    const tag = String(p).toLowerCase();
+    // This app currently ships Simplified Chinese only. Do not select it for
+    // explicitly Traditional Chinese locales (Taiwan, Hong Kong, Macau).
+    if (/^zh-(?:hant|tw|hk|mo)(?:-|$)/.test(tag)) continue;
+    const base = tag.split("-")[0];
+    if (I18N[base]) return base;
+  }
+  return "en";
+}
+
+let LANG = detectLang();
+
+function t(key, vars) {
+  let s = I18N[LANG][key] ?? I18N.en[key] ?? key;
+  if (vars) for (const [k, v] of Object.entries(vars)) s = s.replaceAll(`{${k}}`, v);
+  return s;
+}
+
+function setUiLang(code) {
+  if (!I18N[code]) return;
+  LANG = code;
+  try {
+    localStorage.setItem("ui-lang", code);
+  } catch {}
+}
+
+// Language names in the current UI language, e.g. "Spanish" / "espagnol" / "西班牙语".
+function langName(code) {
+  try {
+    const n = new Intl.DisplayNames([LOCALES[LANG]], { type: "language" }).of(code);
+    return n; // Intl.DisplayNames supplies locale-appropriate capitalisation.
+  } catch {
+    return code;
+  }
+}
+
+function speechLangList() {
+  const names = SPEECH_LANGS.map(langName);
+  try {
+    return new Intl.ListFormat(LOCALES[LANG], { style: "long", type: "conjunction" }).format(names);
+  } catch {
+    return names.join(", ");
+  }
+}
+
+// Fill every static element marked with data-i18n* attributes.
+function applyI18n() {
+  document.documentElement.lang = LOCALES[LANG];
+  document.title = t("title");
+  document.querySelectorAll("[data-i18n]").forEach((el) => (el.textContent = t(el.dataset.i18n)));
+  document.querySelectorAll("[data-i18n-html]").forEach((el) => (el.innerHTML = t(el.dataset.i18nHtml)));
+  document.querySelectorAll("[data-i18n-aria]").forEach((el) => el.setAttribute("aria-label", t(el.dataset.i18nAria)));
+  document.querySelectorAll("[data-i18n-empty]").forEach((el) => el.setAttribute("data-empty", t(el.dataset.i18nEmpty)));
+  document.querySelectorAll("#language option[value]:not([value=''])").forEach((o) => (o.textContent = langName(o.value)));
+  const note = document.getElementById("langNote");
+  if (note) note.textContent = t("langNote", { list: speechLangList() });
+  const sel = document.getElementById("uiLang");
+  if (sel) sel.value = LANG;
+}
