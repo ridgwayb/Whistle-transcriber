@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dictate">
+<title>Dictate</title>
+<style>
+  :root {
+    --fog:#e8ecef; --sheet:#fbfcfc; --ink:#16222e; --ink-soft:#55636f; --line:#c9d1d8;
+    --blue:#1d4f9c; --blue-ink:#fff; --rec:#c2331f; --ok:#1d6b4a; --err:#a3261a;
+    --ui: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --read: "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --fog:#11171d; --sheet:#1a222a; --ink:#e6ecf1; --ink-soft:#94a3b0; --line:#2f3b46;
+            --blue:#7fb0ff; --blue-ink:#0c1722; --rec:#ff7a66; --ok:#6fd1a1; --err:#ff8f80; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--fog); color:var(--ink); font:16px/1.5 var(--ui);
+         padding:max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(32px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left)); }
+  main { max-width:680px; margin:0 auto; display:grid; gap:16px; }
+  h1 { margin:0; font:600 1.6rem/1.2 var(--read); }
+  p { margin:0; color:var(--ink-soft); font-size:.95rem; }
+  .sheet { background:var(--sheet); border:1px solid var(--line); border-radius:10px; padding:16px; display:grid; gap:12px; }
+  .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .btn { appearance:none; border:1px solid var(--blue); background:var(--blue); color:var(--blue-ink); font:600 1rem var(--ui);
+         padding:12px 18px; border-radius:8px; cursor:pointer; min-height:48px; }
+  .btn.quiet { background:transparent; color:var(--ink); border-color:var(--line); font-weight:500; padding:8px 14px; min-height:42px; }
+  .btn.big { width:100%; min-height:72px; font-size:1.2rem; border-radius:14px; display:flex; gap:12px; align-items:center; justify-content:center; }
+  .btn[data-on="true"] { background:var(--rec); border-color:var(--rec); color:#fff; }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
+  .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline:3px solid var(--blue); outline-offset:2px; }
+  .dot { width:14px; height:14px; border-radius:50%; background:currentColor; }
+  .btn[data-on="true"] .dot { border-radius:3px; }
+  .meter { --lvl:0; height:6px; background:var(--line); border-radius:3px; overflow:hidden; }
+  .meter::after { content:""; display:block; height:100%; width:calc(var(--lvl)*100%); background:var(--ok); }
+  #status { min-height:1.5em; color:var(--ink-soft); font-size:.95rem; }
+  #status[data-kind=ok] { color:var(--ok); }
+  #status[data-kind=error] { color:var(--err); }
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--line); }
+  .tabs button { appearance:none; background:none; border:0; border-bottom:2px solid transparent; padding:8px 12px; margin-bottom:-1px; font:inherit; color:var(--ink-soft); cursor:pointer; }
+  .tabs button[aria-selected=true] { color:var(--ink); border-bottom-color:var(--blue); font-weight:600; }
+  #out { min-height:7rem; font:1.25rem/1.65 var(--read); white-space:pre-wrap; overflow-wrap:anywhere; }
+  #out.empty::before { content:"Your text will appear here."; color:var(--ink-soft); font-style:italic; }
+  #stats { font-size:.85rem; color:var(--ink-soft); }
+  details { border:1px solid var(--line); border-radius:10px; background:var(--sheet); }
+  summary { cursor:pointer; padding:14px 16px; font-weight:600; }
+  .settings { padding:0 16px 16px; display:grid; gap:12px; }
+  label { display:grid; gap:4px; font-size:.9rem; color:var(--ink-soft); }
+  label.check { display:flex; gap:10px; align-items:center; color:var(--ink); font-size:.95rem; min-height:36px; }
+  select, textarea { font:1rem var(--ui); padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--sheet); color:var(--ink); width:100%; min-height:44px; }
+  textarea { min-height:96px; resize:vertical; }
+  input[type=checkbox] { width:20px; height:20px; accent-color:var(--blue); }
+  .hint { font-size:.85rem; color:var(--ink-soft); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:480px) { .grid2 { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Dictate</h1>
+    <p>English and Spanish, mixed. Runs on this device; your audio never leaves it.</p>
+  </header>
+
+  <section class="sheet">
+    <button class="btn big" id="recBtn" disabled><span class="dot"></span><span id="recLabel">Record</span></button>
+    <div class="meter" id="meter" aria-hidden="true"></div>
+    <div class="row">
+      <label class="btn quiet" style="cursor:pointer;display:inline-flex">Or choose an audio file
+        <input type="file" id="fileInput" accept="audio/*,video/*" hidden>
+      </label>
+      <label class="check"><input type="checkbox" id="noisy"> Noisy or unclear audio</label>
+    </div>
+    <p id="status" role="status"></p>
+  </section>
+
+  <section class="sheet">
+    <div class="tabs" id="tabs" hidden role="tablist">
+      <button role="tab" id="tabClean" aria-selected="true">Cleaned</button>
+      <button role="tab" id="tabRaw" aria-selected="false">Original</button>
+    </div>
+    <div id="out" class="empty"></div>
+    <div id="stats"></div>
+    <div class="row">
+      <button class="btn quiet" id="copyBtn" disabled>Copy</button>
+      <button class="btn quiet" id="shareBtn" disabled hidden>Share…</button>
+      <button class="btn quiet" id="chatBtn" disabled>Copy for ChatGPT</button>
+      <button class="btn quiet" id="clearBtn" disabled>Clear</button>
+    </div>
+  </section>
+
+  <details>
+    <summary>Settings</summary>
+    <div class="settings">
+      <div class="grid2">
+        <label>Speech model
+          <select id="model">
+            <option value="small">Whisper small (best, ~250 MB)</option>
+            <option value="base">Whisper base (lighter, ~85 MB)</option>
+            <option value="whistle">Whistle (lightest, clean speech)</option>
+          </select>
+        </label>
+        <label>Language
+          <select id="lang">
+            <option value="mix">English + Spanish, mixed</option>
+            <option value="auto">Whisper decides</option>
+            <option value="en">English only</option>
+            <option value="es">Spanish only</option>
+          </select>
+        </label>
+      </div>
+      <label class="check"><input type="checkbox" id="cleanup"> Clean up the text with an on-device language model</label>
+      <div class="grid2">
+        <label>Cleanup model
+          <select id="llm">
+            <option value="0.5b">Qwen2.5 0.5B (~350 MB)</option>
+            <option value="1.5b">Qwen2.5 1.5B (~1 GB, better)</option>
+          </select>
+        </label>
+        <label>Run models on
+          <select id="device">
+            <option value="auto">Auto (WebGPU if available)</option>
+            <option value="wasm">CPU only</option>
+            <option value="webgpu">WebGPU</option>
+          </select>
+        </label>
+      </div>
+      <label class="check"><input type="checkbox" id="filter"> Browser noise filter while recording</label>
+      <label class="check"><input type="checkbox" id="lowMem"> Low-memory mode (unload each model after use)</label>
+      <label>If the language is unclear, assume
+        <select id="assume"><option value="en">English</option><option value="es">Spanish</option></select>
+      </label>
+      <label>Glossary: names and terms, one per line. Use "heard =&gt; correct" to always replace a mishearing.
+        <textarea id="glossary" spellcheck="false" autocapitalize="off" placeholder="Eixample&#10;Siobhan&#10;eksample => Eixample"></textarea>
+      </label>
+      <div class="row">
+        <button class="btn quiet" id="freeBtn">Free memory</button>
+        <span class="hint" id="devInfo"></span>
+      </div>
+      <p class="hint"><b>Noisy audio</b> turns on the browser noise filter and the cleanup step for that recording. The cleanup model is small: it fixes obvious slips but can miss context, so check the Original tab when it matters.</p>
+    </div>
+  </details>
+</main>
+<script type="module" src="dictate.js"></script>
+</body>
+</html>
