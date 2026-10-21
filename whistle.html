@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Whistle transcriber</title>
+<meta name="description" content="Private, on-device speech to text in your browser, powered by Cactus Whistle.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%99%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --fog: #e8ecef;
+    --sheet: #fbfcfc;
+    --ink: #16222e;
+    --ink-soft: #55636f;
+    --line: #c9d1d8;
+    --blue: #1d4f9c;
+    --blue-ink: #ffffff;
+    --rec: #c2331f;
+    --ok: #1d6b4a;
+    --err: #a3261a;
+    --ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --read: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fog: #11171d;
+      --sheet: #1a222a;
+      --ink: #e6ecf1;
+      --ink-soft: #94a3b0;
+      --line: #2f3b46;
+      --blue: #7fb0ff;
+      --blue-ink: #0c1722;
+      --rec: #ff7a66;
+      --ok: #6fd1a1;
+      --err: #ff8f80;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--fog);
+    color: var(--ink);
+    font: 16px/1.5 var(--ui);
+    padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+             max(28px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+  main { max-width: 720px; margin: 0 auto; display: grid; gap: 18px; }
+  h1 { margin: 0; font: 600 1.6rem/1.2 var(--read); letter-spacing: -0.01em; }
+  header p { margin: 4px 0 0; color: var(--ink-soft); max-width: 52ch; }
+
+  #status { min-height: 1.5em; margin: 0; font-size: .95rem; color: var(--ink-soft); }
+  #status[data-kind="ok"] { color: var(--ok); }
+  #status[data-kind="error"] { color: var(--err); }
+  #bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin-top: 6px; }
+  #barFill { height: 100%; width: 0; background: var(--blue); transition: width .15s linear; }
+
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+  .tabs button {
+    appearance: none; background: none; border: 0; border-bottom: 2px solid transparent;
+    padding: 10px 14px; margin-bottom: -1px; font: inherit; color: var(--ink-soft); cursor: pointer;
+  }
+  .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--blue); font-weight: 600; }
+
+  .panel { display: grid; gap: 12px; justify-items: start; }
+  .panel p { margin: 0; color: var(--ink-soft); font-size: .95rem; max-width: 56ch; }
+
+  .btn {
+    appearance: none; border: 1px solid var(--blue); background: var(--blue); color: var(--blue-ink);
+    font: 600 1rem var(--ui); padding: 12px 20px; border-radius: 8px; cursor: pointer; min-height: 48px;
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .btn.quiet { background: transparent; color: var(--ink); border-color: var(--line); font-weight: 500; padding: 8px 14px; min-height: 40px; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn:focus-visible, .tabs button:focus-visible, select:focus-visible, input:focus-visible, .drop:focus-within {
+    outline: 3px solid var(--blue); outline-offset: 2px;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: currentColor; }
+  .btn[data-on="true"] { background: var(--rec); border-color: var(--rec); color: #fff; }
+  .btn[data-on="true"] .dot { border-radius: 2px; }
+
+  .meter { --lvl: 0; width: min(100%, 320px); height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+  .meter::after { content: ""; display: block; height: 100%; width: calc(var(--lvl) * 100%); background: var(--ok); transition: width .08s linear; }
+
+  .drop {
+    display: grid; place-items: center; gap: 4px; width: 100%; padding: 28px 16px; text-align: center;
+    border: 1.5px dashed var(--line); border-radius: 10px; cursor: pointer; color: var(--ink-soft);
+  }
+  .drop.over { border-color: var(--blue); color: var(--ink); }
+  .drop.disabled { opacity: .5; pointer-events: none; }
+  .drop input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .drop strong { color: var(--ink); }
+
+  .settings { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; align-items: end; }
+  .settings label { display: grid; gap: 4px; font-size: .88rem; color: var(--ink-soft); }
+  .settings .wide { grid-column: 1 / -1; }
+  select, input[type="text"] {
+    font: 1rem var(--ui); padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--sheet); color: var(--ink); width: 100%; min-height: 44px;
+  }
+  .check { display: flex !important; align-items: center; gap: 10px; color: var(--ink) !important; min-height: 44px; }
+  .check input { width: 20px; height: 20px; accent-color: var(--blue); }
+  .muted { opacity: .5; }
+  @media (max-width: 480px) { .settings { grid-template-columns: 1fr; } }
+
+  .sheet {
+    background: var(--sheet); border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px 18px 14px; display: grid; gap: 12px;
+  }
+  #transcript { min-height: 9rem; font: 1.3rem/1.65 var(--read); white-space: pre-wrap; overflow-wrap: anywhere; }
+  #transcript.empty::before { content: attr(data-empty); color: var(--ink-soft); font-style: italic; }
+  #pending { color: var(--ink-soft); }
+  .foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+  .foot .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  #stats { font-size: .85rem; color: var(--ink-soft); }
+
+  #wordList { list-style: none; margin: 0; padding: 8px 0 0; border-top: 1px solid var(--line); max-height: 240px; overflow: auto;
+    display: grid; gap: 2px; font-size: .9rem; }
+  #wordList li { display: grid; grid-template-columns: 8.5em 1fr auto; gap: 8px; }
+  #wordList time { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  #wordList small { color: var(--ink-soft); }
+
+  .hrow { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .ui-lang { width: auto; min-height: 36px; padding: 6px 10px; font-size: .9rem; }
+  .note { margin: 0; font-size: .85rem; color: var(--ink-soft); }
+  footer { font-size: .85rem; color: var(--ink-soft); }
+  footer a { color: inherit; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="hrow">
+      <h1 data-i18n="title">Whistle transcriber</h1>
+      <select id="uiLang" class="ui-lang" data-i18n-aria="uiLang" aria-label="Interface language">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+        <option value="ca">Català</option>
+        <option value="zh">中文</option>
+      </select>
+    </div>
+    <p data-i18n="subtitle">Speech to text that runs entirely in this tab.</p>
+  </header>
+
+  <div>
+    <p id="status" role="status" aria-live="polite">Starting…</p>
+    <div id="bar" hidden><div id="barFill"></div></div>
+  </div>
+
+  <section>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-mode="live" aria-selected="true" data-i18n="tabLive">Live</button>
+      <button role="tab" data-mode="record" aria-selected="false" data-i18n="tabRecord">Record a clip</button>
+      <button role="tab" data-mode="file" aria-selected="false" data-i18n="tabFile">Audio file</button>
+    </div>
+
+    <div class="panel" data-panel="live" style="margin-top:16px">
+      <p data-i18n="liveHelp">Words appear a second or two after you say them.</p>
+      <button class="btn" id="liveBtn" disabled><span class="dot"></span><span id="liveLabel">Start listening</span></button>
+      <div class="meter" id="levelLive" aria-hidden="true"></div>
+    </div>
+
+    <div class="panel" data-panel="record" style="margin-top:16px" hidden>
+      <p data-i18n="recHelp">Record, then transcribe the whole clip.</p>
+      <button class="btn" id="micBtn" disabled><span class="dot"></span><span id="micLabel">Record</span></button>
+      <div class="meter" id="level" aria-hidden="true"></div>
+    </div>
+
+    <div class="panel" data-panel="file" style="margin-top:16px" hidden>
+      <label class="drop disabled" id="drop">
+        <strong data-i18n="fileChoose">Choose an audio file</strong>
+        <span data-i18n="fileDrop">or drop one here</span>
+        <input type="file" id="fileInput" accept="audio/*,video/*" disabled>
+      </label>
+    </div>
+  </section>
+
+  <section class="settings" aria-label="Settings">
+    <label><span data-i18n="language">Language</span>
+      <select id="language">
+        <option value="" data-i18n="langAuto">Detect automatically</option>
+        <option value="en">English</option>
+        <option value="de">German</option>
+        <option value="fr">French</option>
+        <option value="es">Spanish</option>
+        <option value="it">Italian</option>
+        <option value="nl">Dutch</option>
+        <option value="pl">Polish</option>
+      </select>
+    </label>
+    <label class="check" id="wordsRow"><input type="checkbox" id="words"> <span data-i18n="wordTimes">Word timestamps</span></label>
+    <p class="note wide" id="langNote"></p>
+    <label class="wide"><span data-i18n="keywordsLabel">Names and terms to favour (comma-separated)</span>
+      <input type="text" id="keywords" placeholder="Siobhan, Krzysztof, X-ray crystallography" autocomplete="off" spellcheck="false">
+    </label>
+  </section>
+
+  <section class="sheet">
+    <div id="transcript" class="empty" data-i18n-empty="empty"><span id="committed"></span><span id="pending"></span></div>
+    <ol id="wordList" hidden></ol>
+    <div class="foot">
+      <span id="stats"></span>
+      <span class="actions">
+        <button class="btn quiet" id="copy" disabled data-i18n="copy">Copy</button>
+        <button class="btn quiet" id="save" disabled data-i18n="save">Save .txt</button>
+        <button class="btn quiet" id="clear" disabled data-i18n="clear">Clear</button>
+      </span>
+    </div>
+  </section>
+
+  <footer data-i18n-html="footer"></footer>
+</main>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
